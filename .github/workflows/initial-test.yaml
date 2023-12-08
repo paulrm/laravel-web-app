@@ -4,17 +4,16 @@ on: [push]
 
 jobs:
   build:
-    runs-on: php:8.2-apache
+    runs-on: ubuntu-20.04
 
     steps:
     - uses: actions/checkout@v2
       name: Checkout code
 
-    - name: Install PHP and dependencies
-      run: sudo apt-get update && apt-get install -y libpng-dev libonig-dev libxml2-dev zip curl unzip git libzip-dev && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip
-
-    - name: Install Composer dependencies
-      run: composer install --no-interaction --prefer-dist --optimize-autoloader
+    - name: Setup PHP with PECL extension
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.2'
 
     - name: Build Docker image
       run: docker build . -t laravel-web-app
@@ -31,7 +30,7 @@ jobs:
     - name: Check if container is up
       run: |
         for i in {1..10}; do
-          if curl http://localhost\?code=OK; then
+          if curl http://localhost:/?code=OK; then
             echo "Endpoint is up!"
             exit 0
           else
