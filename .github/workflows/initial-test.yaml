@@ -4,14 +4,14 @@ on: [push]
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: php:8.2-apache
 
     steps:
     - uses: actions/checkout@v2
       name: Checkout code
 
     - name: Install PHP and dependencies
-      run: sudo apt-get update && sudo apt-get install php php-mbstring php-xml
+      run: sudo apt-get update && apt-get install -y libpng-dev libonig-dev libxml2-dev zip curl unzip git libzip-dev && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip
 
     - name: Install Composer dependencies
       run: composer install --no-interaction --prefer-dist --optimize-autoloader
