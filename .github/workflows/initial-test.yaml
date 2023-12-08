@@ -16,6 +16,12 @@ jobs:
     - name: Run Docker container
       run: docker run -d -p 8080:8080 --name laravel-container laravel-web-app
 
+    - name: list containers
+      run: docker ps
+
+    - name: Get container logs
+      run: docker logs laravel-container
+
     - name: Check if container is up
       run: |
         for i in {1..10}; do
