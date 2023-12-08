@@ -1,0 +1,31 @@
+name: Build and Test Container
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+      name: Checkout code
+
+    - name: Build Docker image
+      run: docker build . -t laravel-web-app
+
+    - name: Run Docker container
+      run: docker run -d -p 8080:8080 --name laravel-container laravel-web-app
+
+    - name: Check if container is up
+      run: |
+        for i in {1..10}; do
+          if curl http://localhost:8080/?code=OK; then
+            echo "Endpoint is up!"
+            exit 0
+          else
+            echo "Waiting for endpoint to be up..."
+            sleep 5
+          fi
+        done
+        echo "Endpoint did not respond in time."
+        exit 1
