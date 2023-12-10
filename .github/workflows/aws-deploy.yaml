@@ -22,9 +22,8 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ env.AWS_REGION }}
 
-    - name: List Instances with Security Groups and Subnets
-      run: |
-        aws ec2 describe-instances --query 'Reservations[*].Instances[*].[InstanceId, SubnetId, SecurityGroups[*].GroupName]' --output table
+    - name: List available subnets
+      run: aws ec2 describe-subnets --query 'Subnets[*].SubnetId' --output text
 
     - name: Create key pair
       id: create-keypair
