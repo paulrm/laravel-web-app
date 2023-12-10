@@ -12,6 +12,13 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
 
+    - name: Set up AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+
     - name: Create key pair
       id: create-keypair
       run: |
@@ -20,13 +27,6 @@ jobs:
         chmod 600 $KEY_NAME.pem
         echo "KEY_NAME=$KEY_NAME" >> $GITHUB_ENV
         echo "KEY_FILE=$KEY_NAME.pem" >> $GITHUB_ENV      
-
-    - name: Set up AWS credentials
-      uses: aws-actions/configure-aws-credentials@v1
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ secrets.AWS_REGION }}
 
     - name: Launch EC2 instance
       id: launch-instance
