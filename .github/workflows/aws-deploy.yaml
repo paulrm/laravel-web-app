@@ -76,12 +76,6 @@ jobs:
         echo "Instance ID: $instance_id"
         echo "{INSTANCE_ID}={$instance_id}" >> $GITHUB_OUTPUT
 
-    - name: Tag the instance
-      run: |
-        aws ec2 create-tags \
-          --resources ${{ steps.launch-instance.outputs.INSTANCE_ID }} \
-          --tags Key=Name,Value=web-gravitron Key=Environment,Value=Production
-
     - name: Wait for instance to be running
       run: aws ec2 wait instance-running --instance-ids ${{ steps.launch-instance.outputs.INSTANCE_ID }}
 
