@@ -1,4 +1,4 @@
-# Laravel-web-app v2.0
+# Laravel-web-app v3.0
 
 - Este proyecto pretende para verificar como hacer el ci/cd de una webapp 
 
@@ -13,6 +13,12 @@ docker container logs laravel-web-app | grep "code=OK"
 docker container stop laravel-web-app
 docker image rm laravel-web-app
 ```
+
+# Problem in working v3.0
+    - [x] created a branch to develop in AWS
+    - [x] test Gravitron instance creation
+    - [ ] test deploy from github action to EC2 instance
+        - Requiere crear un security-group y un VPC para acceder desde github por ssh 
 
 ## Log
 - 3.0 Version deploy in EC2 via AWS CLI

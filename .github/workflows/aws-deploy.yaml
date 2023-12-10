@@ -22,6 +22,24 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ env.AWS_REGION }}
 
+    - name: Create VPC
+      id: create-vpc
+      run: |
+        vpc_id=$(aws ec2 create-vpc --cidr-block 10.0.0.0/16 --query 'Vpc.VpcId' --output text)
+        aws ec2 modify-vpc-attribute --vpc-id $vpc_id --enable-dns-support "{\"Value\":true}"
+        aws ec2 modify-vpc-attribute --vpc-id $vpc_id --enable-dns-hostnames "{\"Value\":true}"
+        echo "VPC_ID=$vpc_id" >> $GITHUB_ENV
+        echo "::set-output name=VPC_ID::$vpc_id"
+
+    - name: Create Security Group
+      id: create-sg
+      run: |
+        sg_id=$(aws ec2 create-security-group --group-name my-sg --description "My security group" --vpc-id ${{ steps.create-vpc.outputs.VPC_ID }} --query 'GroupId' --output text)
+        aws ec2 authorize-security-group-ingress --group-id $sg_id --protocol tcp --port 22 --cidr 0.0.0.0/0
+        aws ec2 authorize-security-group-ingress --group-id $sg_id --protocol tcp --port 80 --cidr 0.0.0.0/0
+        echo "SG_ID=$sg_id" >> $GITHUB_ENV
+        echo "::set-output name=SG_ID::$sg_id"
+
     - name: Create key pair
       id: create-keypair
       run: |
@@ -43,7 +61,7 @@ jobs:
           --subnet-id subnet-0bbe806b1517c5167 \
           --query 'Instances[0].InstanceId' --output text)
         echo "Instance ID: $instance_id"
-        echo "::set-output name=INSTANCE_ID::$instance_id"
+        echo "{INSTANCE_ID}={$instance_id}" >> $GITHUB_OUTPUT
 
     - name: Tag the instance
       run: |
@@ -59,8 +77,20 @@ jobs:
       run: |
         instance_ip=$(aws ec2 describe-instances --instance-ids ${{ steps.launch-instance.outputs.INSTANCE_ID }} --query 'Reservations[0].Instances[0].PublicIpAddress' --output text)
         echo "Instance IP: $instance_ip"
-        echo "::set-output name=INSTANCE_IP::$instance_ip"
+        echo "{INSTANCE_IP}={$instance_IP}" >> $GITHUB_OUTPUT
 
     - name: SSH into instance
       run: |
         ssh -o StrictHostKeyChecking=no -i ${{ env.KEY_FILE }} ec2-user@${{ steps.get-ip.outputs.INSTANCE_IP }} "echo 'SSH successful!'"
+
+    - name: Terminate EC2 Instance
+      if: always()
+      run: aws ec2 terminate-instances --instance-ids ${{ steps.launch-instance.outputs.INSTANCE_ID }}
+
+    - name: Delete Security Group
+      if: always()
+      run: aws ec2 delete-security-group --group-id ${{ env.SG_ID }}
+
+    - name: Delete VPC
+      if: always()
+      run: aws ec2 delete-vpc --vpc-id ${{ env.VPC_ID }}
