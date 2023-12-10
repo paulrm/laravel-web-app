@@ -72,6 +72,7 @@ jobs:
           --key-name ${{ env.KEY_NAME }} \
           --security-group-ids ${{ env.SG_ID }} \
           --subnet-id ${{ env.SUBNET_ID }} \
+          --associate-public-ip-address \
           --query 'Instances[0].InstanceId' --output text)
         echo "Instance ID: $instance_id"
         echo "{INSTANCE_ID}={$instance_id}" >> $GITHUB_OUTPUT
