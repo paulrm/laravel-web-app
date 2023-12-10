@@ -22,24 +22,6 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ env.AWS_REGION }}
 
-    - name: Create VPC
-      id: create-vpc
-      run: |
-        vpc_id=$(aws ec2 create-vpc --cidr-block 10.0.0.0/16 --query 'Vpc.VpcId' --output text)
-        aws ec2 modify-vpc-attribute --vpc-id $vpc_id --enable-dns-support "{\"Value\":true}"
-        aws ec2 modify-vpc-attribute --vpc-id $vpc_id --enable-dns-hostnames "{\"Value\":true}"
-        echo "VPC_ID=$vpc_id" >> $GITHUB_ENV
-        echo "::set-output name=VPC_ID::$vpc_id"
-
-    - name: Create Security Group
-      id: create-sg
-      run: |
-        sg_id=$(aws ec2 create-security-group --group-name my-sg --description "My security group" --vpc-id ${{ steps.create-vpc.outputs.VPC_ID }} --query 'GroupId' --output text)
-        aws ec2 authorize-security-group-ingress --group-id $sg_id --protocol tcp --port 22 --cidr 0.0.0.0/0
-        aws ec2 authorize-security-group-ingress --group-id $sg_id --protocol tcp --port 80 --cidr 0.0.0.0/0
-        echo "SG_ID=$sg_id" >> $GITHUB_ENV
-        echo "::set-output name=SG_ID::$sg_id"
-
     - name: Create key pair
       id: create-keypair
       run: |
@@ -53,12 +35,12 @@ jobs:
       id: launch-instance
       run: |
         instance_id=$(aws ec2 run-instances \
-          --image-id ami-03fd0aa14bd102718 \
+          --image-id ami-0a75bd84854bc95c9 \
           --count 1 \
-          --instance-type t4g.small \
+          --instance-type t4g.nano \
           --key-name ${{ env.KEY_NAME }} \
-          --security-group-ids sg-020e10f8dac678684 sg-00d578b7f78a06563 sg-037bca3d9e0f4ae84 sg-070c1eabc5236ed51 \
-          --subnet-id subnet-0bbe806b1517c5167 \
+          --security-group-ids sg-4472e322 \
+          --subnet-id subnet-7bf3f650 \
           --query 'Instances[0].InstanceId' --output text)
         echo "Instance ID: $instance_id"
         echo "{INSTANCE_ID}={$instance_id}" >> $GITHUB_OUTPUT
