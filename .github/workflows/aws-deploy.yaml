@@ -1,0 +1,63 @@
+name: Launch and SSH into EC2 Instance (copy web-us11)
+
+on:
+  push:
+    branches:
+      - release-aws  # Trigger the workflow on a push to the main branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Create key pair
+      id: create-keypair
+      run: |
+        KEY_NAME=my-github-actions-keypair-$RANDOM
+        aws ec2 create-key-pair --key-name $KEY_NAME --query 'KeyMaterial' --output text > $KEY_NAME.pem
+        chmod 600 $KEY_NAME.pem
+        echo "KEY_NAME=$KEY_NAME" >> $GITHUB_ENV
+        echo "KEY_FILE=$KEY_NAME.pem" >> $GITHUB_ENV      
+
+    - name: Set up AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+
+    - name: Launch EC2 instance
+      id: launch-instance
+      run: |
+        instance_id=$(aws ec2 run-instances \
+          --image-id ami-03fd0aa14bd102718 \
+          --count 1 \
+          --instance-type t2.micro \
+          --key-name ${{ env.KEY_NAME }} \
+          --security-group-ids sg-020e10f8dac678684 sg-00d578b7f78a06563 sg-037bca3d9e0f4ae84 sg-070c1eabc5236ed51 \
+          --subnet-id subnet-0bbe806b1517c5167 \
+          --query 'Instances[0].InstanceId' --output text)
+        echo "Instance ID: $instance_id"
+        echo "::set-output name=INSTANCE_ID::$instance_id"
+
+    - name: Tag the instance
+      run: |
+        aws ec2 create-tags \
+          --resources ${{ steps.launch-instance.outputs.INSTANCE_ID }} \
+          --tags Key=Name,Value=web-gravitron Key=Environment,Value=Production
+
+    - name: Wait for instance to be running
+      run: aws ec2 wait instance-running --instance-ids ${{ steps.launch-instance.outputs.INSTANCE_ID }}
+
+    - name: Retrieve public IP
+      id: get-ip
+      run: |
+        instance_ip=$(aws ec2 describe-instances --instance-ids ${{ steps.launch-instance.outputs.INSTANCE_ID }} --query 'Reservations[0].Instances[0].PublicIpAddress' --output text)
+        echo "Instance IP: $instance_ip"
+        echo "::set-output name=INSTANCE_IP::$instance_ip"
+
+    - name: SSH into instance
+      run: |
+        ssh -o StrictHostKeyChecking=no -i ${{ env.KEY_FILE }} ec2-user@${{ steps.get-ip.outputs.INSTANCE_IP }} "echo 'SSH successful!'"
