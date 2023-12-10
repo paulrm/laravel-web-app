@@ -6,7 +6,7 @@ on:
       - release-aws  # Trigger the workflow on a push to the main branch
 
 env:
-  AWS_REGION: us-east-1 
+  AWS_REGION: us-east-2 
 
 jobs:
   deploy:
@@ -66,7 +66,7 @@ jobs:
       id: launch-instance
       run: |
         instance_id=$(aws ec2 run-instances \
-          --image-id ami-0a75bd84854bc95c9 \
+          --image-id ami-0090be1905998682a \
           --count 1 \
           --instance-type t4g.nano \
           --key-name ${{ env.KEY_NAME }} \
@@ -94,10 +94,14 @@ jobs:
       if: always()
       run: aws ec2 terminate-instances --instance-ids ${{ steps.launch-instance.outputs.INSTANCE_ID }}
 
-    - name: Delete Security Group
+    - name: Delete Subnet
       if: always()
-      run: aws ec2 delete-security-group --group-id ${{ env.SG_ID }}
+      run: aws ec2 create-subnet --subnet-id-id ${{ env.SUBNET_ID }}
 
     - name: Delete VPC
       if: always()
       run: aws ec2 delete-vpc --vpc-id ${{ env.VPC_ID }}
+
+    - name: Delete Security Group
+      if: always()
+      run: aws ec2 delete-security-group --group-id ${{ env.SG_ID }}
