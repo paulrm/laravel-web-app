@@ -5,6 +5,9 @@ on:
     branches:
       - release-aws  # Trigger the workflow on a push to the main branch
 
+env:
+  AWS_REGION: us-west-2 
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
