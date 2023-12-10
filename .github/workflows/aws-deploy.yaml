@@ -43,7 +43,7 @@ jobs:
           --instance-type t4g.nano \
           --key-name ${{ env.KEY_NAME }} \
           --security-group-ids sg-000ce17514024668f \
-          --subnet-id subnet-fbbc82c1 \
+          --subnet-id subnet-0c8732fc549ecf8cf \
           --query 'Instances[0].InstanceId' --output text)
         echo "Instance ID: $instance_id"
         echo "{INSTANCE_ID}={$instance_id}" >> $GITHUB_OUTPUT
