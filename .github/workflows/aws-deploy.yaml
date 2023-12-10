@@ -6,7 +6,7 @@ on:
       - release-aws  # Trigger the workflow on a push to the main branch
 
 env:
-  AWS_REGION: us-west-2 
+  AWS_REGION: us-east-1 
 
 jobs:
   deploy:
