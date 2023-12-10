@@ -22,6 +22,32 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ env.AWS_REGION }}
 
+    - name: Create VPC
+      id: create-vpc
+      run: |
+        vpc_id=$(aws ec2 create-vpc --cidr-block 10.0.0.0/16 --query 'Vpc.VpcId' --output text)
+        aws ec2 modify-vpc-attribute --vpc-id $vpc_id --enable-dns-support "{\"Value\":true}"
+        aws ec2 modify-vpc-attribute --vpc-id $vpc_id --enable-dns-hostnames "{\"Value\":true}"
+        echo "VPC_ID=$vpc_id" >> $GITHUB_ENV
+        echo "::set-output name=VPC_ID::$vpc_id"
+
+    - name: Create Security Group
+      id: create-sg
+      run: |
+        sg_id=$(aws ec2 create-security-group --group-name my-sg --description "My security group" --vpc-id ${{ steps.create-vpc.outputs.VPC_ID }} --query 'GroupId' --output text)
+        aws ec2 authorize-security-group-ingress --group-id $sg_id --protocol tcp --port 22 --cidr 0.0.0.0/0
+        aws ec2 authorize-security-group-ingress --group-id $sg_id --protocol tcp --port 80 --cidr 0.0.0.0/0
+        echo "SG_ID=$sg_id" >> $GITHUB_ENV
+        echo "::set-output name=SG_ID::$sg_id"
+
+    - name: Create Subnet
+      id: create-subnet
+      run: |
+        subnet_id=$(aws ec2 create-subnet --vpc-id ${{ env.VPC_ID }} --cidr-block 10.0.1.0/24 --query 'Subnet.SubnetId' --output text)
+        echo "Subnet ID: $subnet_id"
+        echo "SUBNET_ID=$subnet_id" >> $GITHUB_ENV
+        echo "::set-output name=SUBNET_ID::$subnet_id"
+
     - name: List available subnets
       run: aws ec2 describe-subnets --query 'Subnets[*].SubnetId' --output text
 
@@ -32,7 +58,9 @@ jobs:
         aws ec2 create-key-pair --key-name $KEY_NAME --query 'KeyMaterial' --output text > $KEY_NAME.pem
         chmod 600 $KEY_NAME.pem
         echo "KEY_NAME=$KEY_NAME" >> $GITHUB_ENV
-        echo "KEY_FILE=$KEY_NAME.pem" >> $GITHUB_ENV      
+        echo "KEY_FILE=$KEY_NAME.pem" >> $GITHUB_ENV    
+
+  
 
     - name: Launch EC2 instance
       id: launch-instance
@@ -42,8 +70,8 @@ jobs:
           --count 1 \
           --instance-type t4g.nano \
           --key-name ${{ env.KEY_NAME }} \
-          --security-group-ids sg-000ce17514024668f \
-          --subnet-id subnet-0362dfb8af06754f6 \
+          --security-group-ids ${{ env.SG_ID }} \
+          --subnet-id ${{ env.SUBNET_ID }} \
           --query 'Instances[0].InstanceId' --output text)
         echo "Instance ID: $instance_id"
         echo "{INSTANCE_ID}={$instance_id}" >> $GITHUB_OUTPUT
@@ -71,3 +99,11 @@ jobs:
     - name: Terminate EC2 Instance
       if: always()
       run: aws ec2 terminate-instances --instance-ids ${{ steps.launch-instance.outputs.INSTANCE_ID }}
+
+    - name: Delete Security Group
+      if: always()
+      run: aws ec2 delete-security-group --group-id ${{ env.SG_ID }}
+
+    - name: Delete VPC
+      if: always()
+      run: aws ec2 delete-vpc --vpc-id ${{ env.VPC_ID }}
