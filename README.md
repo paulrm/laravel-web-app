@@ -1,4 +1,4 @@
-# Laravel-web-app
+# Laravel-web-app v2.0
 
 - Este proyecto pretende para verificar como hacer el ci/cd de una webapp 
 
@@ -13,3 +13,8 @@ docker container logs laravel-web-app | grep "code=OK"
 docker container stop laravel-web-app
 docker image rm laravel-web-app
 ```
+
+## Log
+- 3.0 Version deploy in EC2 via AWS CLI
+- 2.0 Version docker in github actions 
+- 1.0 Version docker local
