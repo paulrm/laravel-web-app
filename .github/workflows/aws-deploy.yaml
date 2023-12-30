@@ -63,15 +63,6 @@ jobs:
     - name: List available subnets
       run: aws ec2 describe-subnets --query 'Subnets[*].SubnetId' --output text
 
-    - name: Create key pair
-      id: create-keypair
-      run: |
-        KEY_NAME=my-github-actions-keypair-$RANDOM
-        aws ec2 create-key-pair --key-name $KEY_NAME --query 'KeyMaterial' --output text > $KEY_NAME.pem
-        chmod 600 $KEY_NAME.pem
-        echo "KEY_NAME=$KEY_NAME" >> $GITHUB_ENV
-        echo "KEY_FILE=$KEY_NAME.pem" >> $GITHUB_ENV    
-
     - name: Launch EC2 instance
       id: launch-instance
       run: |
@@ -79,7 +70,7 @@ jobs:
           --image-id ami-01f25f0176d4db214 \
           --count 1 \
           --instance-type t4g.nano \
-          --key-name ${{ env.KEY_NAME }} \
+          --key-name default \
           --security-group-ids ${{ env.SG_ID }} \
           --subnet-id ${{ env.SUBNET_ID }} \
           --associate-public-ip-address \
@@ -109,9 +100,12 @@ jobs:
       if: always()
       run: aws ec2 terminate-instances --instance-ids ${{ steps.launch-instance.outputs.INSTANCE_ID }}
 
+    - name: Wait for instance to be terminated
+      run: aws ec2 wait instance-terminated --instance-ids ${{ steps.launch-instance.outputs.INSTANCE_ID }}
+
     - name: Delete Subnet
       if: always()
-      run: aws ec2 delete-subnet --subnet-id-id ${{ env.SUBNET_ID }}
+      run: aws ec2 delete-subnet --subnet-id ${{ env.SUBNET_ID }}
 
     - name: Delete VPC
       if: always()
