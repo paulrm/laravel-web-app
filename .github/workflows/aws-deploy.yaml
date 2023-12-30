@@ -85,7 +85,7 @@ jobs:
           --associate-public-ip-address \
           --query 'Instances[0].InstanceId' --output text)
         echo "Instance ID: $instance_id"
-        echo "{INSTANCE_ID}={$instance_id}" >> $GITHUB_OUTPUT
+        echo "::set-output name=INSTANCE_ID::$instance_id"
 
     - name: Wait for instance to be running
       run: aws ec2 wait instance-running --instance-ids ${{ steps.launch-instance.outputs.INSTANCE_ID }}
