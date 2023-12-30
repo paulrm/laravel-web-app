@@ -28,7 +28,7 @@ jobs:
         echo "ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)" >> $GITHUB_ENV
 
     - name: Display Account ID
-      id: check-account-id
+      id: display-account-id
       run: |
         modified_id="ID: ${AWS_ACCOUNT_ID}"
         echo $modified_id
