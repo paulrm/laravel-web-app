@@ -7,9 +7,8 @@ on:
 
 env:
   AWS_REGION: sa-east-1 
-  SG_ID: sg-069bcd5c53ea95df4
-  # SUBNET_ID: subnet-02a8d1faacef59949
-  SUBNET_ID: subnet-073ff87ed42b8ef65
+  SG_ID: sg-06745997ff74e149e
+  SUBNET_ID: subnet-0659d4557f67e959f
 
 jobs:
   deploy:
