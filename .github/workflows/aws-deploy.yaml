@@ -62,6 +62,12 @@ jobs:
     #     echo "SUBNET_ID=$subnet_id" >> $GITHUB_ENV
     #     echo "::set-output name=SUBNET_ID::$subnet_id"
 
+    - name: Setup SSH
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+
     - name: List available subnets
       run: aws ec2 describe-subnets --query 'Subnets[*].SubnetId' --output text
 
@@ -129,9 +135,13 @@ jobs:
     #   run: |
     #     ssh -o StrictHostKeyChecking=no -i ${{ env.KEY_FILE }} ec2-user@${{ steps.get-ip.outputs.INSTANCE_IP }} "echo 'SSH successful!'"
 
-    - name: Sleep for 10 minutes
+    - name: SSH into instance
+      run: |
+        ssh -o StrictHostKeyChecking=no -i ${{ env.KEY_FILE }} ec2-user@${{ steps.get-ip.outputs.INSTANCE_IP }} "echo 'SSH successful!'"
+
+    - name: Sleep for 30 minutes
       id: delay
-      run: sleep 600
+      run: sleep 1800
 
     - name: Terminate EC2 Instance
       if: always()
@@ -140,9 +150,9 @@ jobs:
     - name: Wait for instance to be terminated
       run: aws ec2 wait instance-terminated --instance-ids ${{ steps.launch-instance.outputs.INSTANCE_ID }}
 
-    - name: Sleep for 1 minutes
-      id: delay-1-minute
-      run: sleep 60
+    # - name: Sleep for 1 minutes
+    #   id: delay-1-minute
+    #   run: sleep 60
 
     # - name: Delete Subnet
     #   if: always()
