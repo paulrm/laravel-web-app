@@ -7,6 +7,8 @@ on:
 
 env:
   AWS_REGION: sa-east-1 
+  SG_ID: sg-069bcd5c53ea95df4
+  SUBNET_ID: subnet-02a8d1faacef59949
 
 jobs:
   deploy:
@@ -34,31 +36,31 @@ jobs:
       run: |
         echo "AWS Account ID $PART1-$PART2-$PART3"
 
-    - name: Create VPC
-      id: create-vpc
-      run: |
-        vpc_id=$(aws ec2 create-vpc --cidr-block 10.0.0.0/16 --query 'Vpc.VpcId' --output text)
-        aws ec2 modify-vpc-attribute --vpc-id $vpc_id --enable-dns-support "{\"Value\":true}"
-        aws ec2 modify-vpc-attribute --vpc-id $vpc_id --enable-dns-hostnames "{\"Value\":true}"
-        echo "VPC_ID=$vpc_id" >> $GITHUB_ENV
-        echo "::set-output name=VPC_ID::$vpc_id"
+    # - name: Create VPC
+    #   id: create-vpc
+    #   run: |
+    #     vpc_id=$(aws ec2 create-vpc --cidr-block 10.0.0.0/16 --query 'Vpc.VpcId' --output text)
+    #     aws ec2 modify-vpc-attribute --vpc-id $vpc_id --enable-dns-support "{\"Value\":true}"
+    #     aws ec2 modify-vpc-attribute --vpc-id $vpc_id --enable-dns-hostnames "{\"Value\":true}"
+    #     echo "VPC_ID=$vpc_id" >> $GITHUB_ENV
+    #     echo "::set-output name=VPC_ID::$vpc_id"
 
-    - name: Create Security Group
-      id: create-sg
-      run: |
-        sg_id=$(aws ec2 create-security-group --group-name my-sg --description "My security group" --vpc-id ${{ steps.create-vpc.outputs.VPC_ID }} --query 'GroupId' --output text)
-        aws ec2 authorize-security-group-ingress --group-id $sg_id --protocol tcp --port 22 --cidr 0.0.0.0/0
-        aws ec2 authorize-security-group-ingress --group-id $sg_id --protocol tcp --port 80 --cidr 0.0.0.0/0
-        echo "SG_ID=$sg_id" >> $GITHUB_ENV
-        echo "::set-output name=SG_ID::$sg_id"
+    # - name: Create Security Group
+    #   id: create-sg
+    #   run: |
+    #     sg_id=$(aws ec2 create-security-group --group-name my-sg --description "My security group" --vpc-id ${{ steps.create-vpc.outputs.VPC_ID }} --query 'GroupId' --output text)
+    #     aws ec2 authorize-security-group-ingress --group-id $sg_id --protocol tcp --port 22 --cidr 0.0.0.0/0
+    #     aws ec2 authorize-security-group-ingress --group-id $sg_id --protocol tcp --port 80 --cidr 0.0.0.0/0
+    #     echo "SG_ID=$sg_id" >> $GITHUB_ENV
+    #     echo "::set-output name=SG_ID::$sg_id"
 
-    - name: Create Subnet
-      id: create-subnet
-      run: |
-        subnet_id=$(aws ec2 create-subnet --vpc-id ${{ env.VPC_ID }} --cidr-block 10.0.1.0/24 --query 'Subnet.SubnetId' --output text)
-        echo "Subnet ID: $subnet_id"
-        echo "SUBNET_ID=$subnet_id" >> $GITHUB_ENV
-        echo "::set-output name=SUBNET_ID::$subnet_id"
+    # - name: Create Subnet
+    #   id: create-subnet
+    #   run: |
+    #     subnet_id=$(aws ec2 create-subnet --vpc-id ${{ env.VPC_ID }} --cidr-block 10.0.1.0/24 --query 'Subnet.SubnetId' --output text)
+    #     echo "Subnet ID: $subnet_id"
+    #     echo "SUBNET_ID=$subnet_id" >> $GITHUB_ENV
+    #     echo "::set-output name=SUBNET_ID::$subnet_id"
 
     - name: List available subnets
       run: aws ec2 describe-subnets --query 'Subnets[*].SubnetId' --output text
@@ -127,9 +129,9 @@ jobs:
     #   run: |
     #     ssh -o StrictHostKeyChecking=no -i ${{ env.KEY_FILE }} ec2-user@${{ steps.get-ip.outputs.INSTANCE_IP }} "echo 'SSH successful!'"
 
-    - name: Sleep for 5 minutes
+    - name: Sleep for 10 minutes
       id: delay
-      run: sleep 300
+      run: sleep 600
 
     - name: Terminate EC2 Instance
       if: always()
@@ -142,14 +144,14 @@ jobs:
       id: delay-1-minute
       run: sleep 60
 
-    - name: Delete Subnet
-      if: always()
-      run: aws ec2 delete-subnet --subnet-id ${{ env.SUBNET_ID }}
+    # - name: Delete Subnet
+    #   if: always()
+    #   run: aws ec2 delete-subnet --subnet-id ${{ env.SUBNET_ID }}
 
-    - name: Delete VPC
-      if: always()
-      run: aws ec2 delete-vpc --vpc-id ${{ env.VPC_ID }}
+    # - name: Delete VPC
+    #   if: always()
+    #   run: aws ec2 delete-vpc --vpc-id ${{ env.VPC_ID }}
 
-    - name: Delete Security Group
-      if: always()
-      run: aws ec2 delete-security-group --group-id ${{ env.SG_ID }}
+    # - name: Delete Security Group
+    #   if: always()
+    #   run: aws ec2 delete-security-group --group-id ${{ env.SG_ID }}
