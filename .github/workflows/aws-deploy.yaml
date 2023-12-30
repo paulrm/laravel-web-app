@@ -25,10 +25,10 @@ jobs:
     - name: Get AWS Account ID
       id: check-account-id
       run: |
-        echo "AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)" >> $GITHUB_ENV
+        echo "ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)" >> $GITHUB_ENV
 
-    - name: Display AWS Account ID
-      run: echo "AWS Account ID is $AWS_ACCOUNT_ID"
+    - name: Display Account ID
+      run: echo "Account ID is $ACCOUNT_ID"
 
     - name: Create VPC
       id: create-vpc
