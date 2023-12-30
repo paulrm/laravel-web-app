@@ -129,7 +129,7 @@ jobs:
       run: |
         instance_ip=$(aws ec2 describe-instances --instance-ids ${{ steps.launch-instance.outputs.INSTANCE_ID }} --query 'Reservations[0].Instances[0].PublicIpAddress' --output text)
         echo "Instance IP: $instance_ip"
-        echo "{INSTANCE_IP}={$instance_IP}" >> $GITHUB_OUTPUT
+        echo "{INSTANCE_IP}={$instance_ip}" >> $GITHUB_OUTPUT
 
     # - name: SSH into instance
     #   run: |
