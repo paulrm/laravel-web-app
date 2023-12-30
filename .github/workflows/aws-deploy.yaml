@@ -137,10 +137,11 @@ jobs:
 
     - name: SSH into instance
       run: |
-        ssh -o StrictHostKeyChecking=no -i ${{ env.KEY_FILE }} ec2-user@${{ steps.get-ip.outputs.INSTANCE_IP }} "echo 'SSH successful!'"
+        ssh -o StrictHostKeyChecking=no -i  ~/.ssh/id_rsa ubuntu@${{ steps.get-ip.outputs.INSTANCE_IP }} "echo 'SSH successful!'"
 
     - name: Sleep for 30 minutes
       id: delay
+      if: always()      
       run: sleep 1800
 
     - name: Terminate EC2 Instance
@@ -148,6 +149,7 @@ jobs:
       run: aws ec2 terminate-instances --instance-ids ${{ steps.launch-instance.outputs.INSTANCE_ID }}
 
     - name: Wait for instance to be terminated
+      if: always()    
       run: aws ec2 wait instance-terminated --instance-ids ${{ steps.launch-instance.outputs.INSTANCE_ID }}
 
     # - name: Sleep for 1 minutes
