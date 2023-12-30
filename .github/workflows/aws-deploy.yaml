@@ -30,6 +30,6 @@ jobs:
     - name: Display Account ID
       id: display-account-id
       run: |
-        modified_id="ID: ${AWS_ACCOUNT_ID}"
+        modified_id="ID: ${ACCOUNT_ID}"
         echo $modified_id
 
