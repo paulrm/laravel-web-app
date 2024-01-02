@@ -8,7 +8,7 @@ on:
 env:
   AWS_REGION: sa-east-1 
   SG_ID: sg-06745997ff74e149e
-  SUBNET_ID: subnet-0659d4557f67e959f
+  # SUBNET_ID: subnet-0659d4557f67e959f
 
 jobs:
   deploy:
@@ -115,7 +115,6 @@ jobs:
           --instance-type t4g.small \
           --key-name default \
           --security-group-ids ${{ env.SG_ID }} \
-          --subnet-id ${{ env.SUBNET_ID }} \
           --associate-public-ip-address \
           --query 'Instances[0].InstanceId' --output text)
         echo "Instance ID: $instance_id"
@@ -129,6 +128,7 @@ jobs:
       run: |
         instance_ip=$(aws ec2 describe-instances --instance-ids ${{ steps.launch-instance.outputs.INSTANCE_ID }} --query 'Reservations[0].Instances[0].PublicIpAddress' --output text)
         echo "Instance IP: $instance_ip"
+        echo "::set-output name=INSTANCE_IP::$instance_ip"        
         echo "{INSTANCE_IP}={$instance_ip}" >> $GITHUB_OUTPUT
 
     # - name: SSH into instance
